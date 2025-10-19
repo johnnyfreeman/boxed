@@ -60,4 +60,5 @@ $BOXED "$box_type" \
     --kv "Skipped=$skipped tests" \
     --kv "Duration=$duration" \
     --kv "Coverage=$coverage" \
-    --footer "Test run completed at $(date '+%Y-%m-%d %H:%M:%S')"
+    --footer "Test run completed at $(date '+%Y-%m-%d %H:%M:%S')" \
+    --exit-on-error

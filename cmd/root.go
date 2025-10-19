@@ -37,7 +37,7 @@ func NewExecutor(renderer render.Renderer, writer io.Writer) *Executor {
 // This method coordinates the entire pipeline but remains simple because each
 // step is handled by dedicated, well-tested modules. The method itself contains
 // no business logic, just composition of validated components.
-func (e *Executor) Execute(boxType string, opts parser.Options, useStdin bool, useJSON bool, jsonFile string) error {
+func (e *Executor) Execute(boxType string, opts parser.Options, useStdin bool, useJSON bool, jsonFile string, exitOnError bool, exitOnWarning bool) error {
 	// JSON input takes precedence over other options
 	if useJSON || jsonFile != "" {
 		var reader *boxio.JSONReader
@@ -94,7 +94,19 @@ func (e *Executor) Execute(boxType string, opts parser.Options, useStdin bool, u
 	output := e.renderer.RenderBox(b)
 
 	_, err = fmt.Fprintln(e.writer, output)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Exit with non-zero code based on box type if flags are set
+	if exitOnError && b.Type == box.Error {
+		os.Exit(1)
+	}
+	if exitOnWarning && b.Type == box.Warning {
+		os.Exit(2)
+	}
+
+	return nil
 }
 
 // NewRootCmd creates the root cobra command with all subcommands configured.
@@ -116,7 +128,7 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 		var title, subtitle, footer, borderStyle string
 		var kvFlags []string
 		var width int
-		var useStdin, useJSON bool
+		var useStdin, useJSON, exitOnError, exitOnWarning bool
 		var jsonFile string
 
 		cmd := &cobra.Command{
@@ -140,7 +152,7 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 					BorderStyle: borderStyle,
 				}
 
-				return executor.Execute(string(boxType), opts, useStdin, useJSON, jsonFile)
+				return executor.Execute(string(boxType), opts, useStdin, useJSON, jsonFile, exitOnError, exitOnWarning)
 			},
 		}
 
@@ -153,6 +165,8 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 		cmd.Flags().BoolVar(&useStdin, "stdin-kv", false, "Read additional KV pairs from stdin (one per line)")
 		cmd.Flags().BoolVar(&useJSON, "json", false, "Read box definition from JSON stdin")
 		cmd.Flags().StringVar(&jsonFile, "json-file", "", "Read box definition from JSON file")
+		cmd.Flags().BoolVar(&exitOnError, "exit-on-error", false, "Exit with code 1 when rendering an error box")
+		cmd.Flags().BoolVar(&exitOnWarning, "exit-on-warning", false, "Exit with code 2 when rendering a warning box")
 		cmd.MarkFlagsMutuallyExclusive("stdin-kv", "json", "json-file")
 
 		return cmd
