@@ -23,11 +23,15 @@ Colors inspired by the Tokyo Night theme.
 **Flags:**
 - `-t, --title` - Box title (bold, colored)
 - `-s, --subtitle` - Box subtitle (italic, gray)
-- `-k, --kv` - Key-value pairs (repeatable, format: `key=value`)
+- `-k, --kv` - Key-value pairs (repeatable, format: `key=value` or `key1=value1,key2=value2`)
 - `-f, --footer` - Box footer (gray)
 - `-b, --border-style` - Border style: `rounded`, `normal`, `thick`, `double` (default: rounded)
 - `-w, --width` - Box width (0 for auto-size)
-- `--stdin-kv` - Read KV pairs from stdin
+- `--stdin-kv` - Read KV pairs from stdin (one per line)
+- `--json` - Read box definition from JSON stdin
+- `--json-file` - Read box definition from JSON file
+- `--exit-on-error` - Exit with code 1 when rendering an error box (for CI/CD)
+- `--exit-on-warning` - Exit with code 2 when rendering a warning box (for CI/CD)
 
 ## Examples
 
@@ -99,3 +103,80 @@ echo -e "Region=us-east-1\nEnv=prod" | \
 ```
 
 <img width="2365" height="1196" alt="image" src="https://github.com/user-attachments/assets/93b32e91-9943-46ae-bd55-162bc8ab5533" />
+
+## Advanced Features
+
+### Comma-separated KV syntax
+
+For convenience, you can pass multiple KV pairs in a single flag using comma separation:
+
+```bash
+# Traditional syntax
+./boxed success --title "Deploy" --kv A=1 --kv B=2 --kv C=3
+
+# Comma-separated (shorter)
+./boxed success --title "Deploy" --kv A=1,B=2,C=3
+
+# Mix both styles
+./boxed success --title "Deploy" --kv A=1,B=2 --kv C=3,D=4
+```
+
+### JSON input
+
+Define your entire box configuration in JSON, perfect for programmatic generation:
+
+```bash
+# From stdin
+echo '{"title":"Status","subtitle":"All Good","kv":{"CPU":"15%","Memory":"28%"}}' | \
+  ./boxed success --json
+
+# From file
+./boxed info --json-file status.json
+
+# Combine JSON with CLI overrides (CLI takes precedence)
+./boxed success --json-file base.json --title "Override Title"
+```
+
+JSON format:
+```json
+{
+  "title": "System Status",
+  "subtitle": "All Systems Normal",
+  "kv": {
+    "CPU": "15%",
+    "Memory": "28%",
+    "Disk": "45%"
+  },
+  "footer": "Updated 2025-10-19",
+  "width": 50,
+  "border_style": "rounded"
+}
+```
+
+### Exit codes for CI/CD
+
+Use exit codes to integrate with CI/CD pipelines and fail builds based on box type:
+
+```bash
+# Exit with code 1 if error box is rendered (fails CI build)
+./boxed error --title "Tests Failed" --exit-on-error
+echo $?  # 1
+
+# Exit with code 2 if warning box is rendered
+./boxed warning --title "Warnings Found" --exit-on-warning
+echo $?  # 2
+
+# Success boxes always exit 0
+./boxed success --title "All Good" --exit-on-error
+echo $?  # 0
+```
+
+Example in CI:
+```bash
+#!/bin/bash
+if ./tests/run.sh; then
+  ./boxed success --title "Tests Passed" --kv "Duration=2.3s"
+else
+  ./boxed error --title "Tests Failed" --exit-on-error
+fi
+```
