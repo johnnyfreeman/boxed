@@ -1,5 +1,7 @@
 # boxed
 
+<img width="2081" height="676" alt="image" src="https://github.com/user-attachments/assets/4e9de355-2cc4-49a1-b363-0c46ce8bb23a" />
+
 Beautiful bordered boxes for terminal output with Tokyo Night theme colors.
 
 ## Install
@@ -34,23 +36,43 @@ Colors inspired by the Tokyo Night theme.
 ./boxed success --title "Deploy Complete" --subtitle "v2.1.0" \
   --kv "Duration=2m 34s" --kv "Commit=abc1234" \
   --footer "Deployed at 2025-10-19"
+```
 
+<img width="845" height="431" alt="image" src="https://github.com/user-attachments/assets/ccc7497d-6b22-41bc-bea7-480625dda68f" />
+
+```bash
 # Error
 ./boxed error --title "Build Failed" \
   --kv "File=src/main.go" --kv "Line=142" \
   --footer "Check logs"
+```
 
+<img width="845" height="431" alt="image" src="https://github.com/user-attachments/assets/52ada984-d3c6-4c05-8a16-3dd9155c2eb2" />
+
+```bash
 # From stdin
 echo -e "Region=us-east-1\nEnv=prod" | \
   ./boxed info --title "Config" --stdin-kv
+```
 
+<img width="845" height="382" alt="image" src="https://github.com/user-attachments/assets/a3eff49d-0bab-408b-b2a2-793cfb472a14" />
+
+```bash
 # Unicode support
 ./boxed success --title "部署完了 ✅" \
   --kv "環境=本番" --kv "Status=🚀 Deployed"
+```
 
+<img width="845" height="379" alt="image" src="https://github.com/user-attachments/assets/bf29c2b3-ae17-4319-858e-a2a9d88017e8" />
+
+```bash
 # Border styles
 ./boxed warning --title "Warning" --border-style thick
+```
 
+<img width="845" height="191" alt="image" src="https://github.com/user-attachments/assets/b1a55ac8-a875-471e-aba5-d4a2b9d91bc2" />
+
+```bash
 # Error with stack trace
 ./boxed error --title "Runtime Panic" --subtitle "SIGSEGV: segmentation violation" \
   --kv "Error=runtime error: invalid memory address or nil pointer dereference" \
@@ -60,7 +82,11 @@ echo -e "Region=us-east-1\nEnv=prod" | \
   --kv "Trace=src/orders/processor.go:89 +0x15c" \
   --kv "Root Cause=Attempted to access uninitialized database connection" \
   --footer "Process terminated with exit code 2"
+```
 
+<img width="2102" height="809" alt="image" src="https://github.com/user-attachments/assets/9abe912e-7a57-47d1-a81b-da0bd21d697c" />
+
+```bash
 # Long text example
 ./boxed warning --title "Database Migration Warning" --subtitle "Schema Changes Detected" \
   --kv "Migration File=/db/migrations/20251019_add_user_authentication_and_session_management_tables_with_foreign_key_constraints.sql" \
@@ -71,3 +97,5 @@ echo -e "Region=us-east-1\nEnv=prod" | \
   --kv "Rollback Plan=Rollback script available at /db/rollbacks/20251019_revert_authentication_changes.sql - tested in staging environment with zero data loss" \
   --footer "Review migration plan at https://docs.example.com/migrations/20251019 before proceeding • Scheduled maintenance window: 2025-10-19 22:00-23:00 UTC"
 ```
+
+<img width="2365" height="1196" alt="image" src="https://github.com/user-attachments/assets/93b32e91-9943-46ae-bd55-162bc8ab5533" />
