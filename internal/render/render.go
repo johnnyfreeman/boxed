@@ -204,13 +204,13 @@ func (r *LipGlossRenderer) buildBottomBorder(border lipgloss.Border, style lipgl
 func (r *LipGlossRenderer) getColorForType(t box.BoxType) string {
 	switch t {
 	case box.Success:
-		return "10"
+		return "114" // Tokyo Night: bright lime green (#9ece6a)
 	case box.Error:
-		return "9"
+		return "210" // Tokyo Night: soft pink-red (#f7768e)
 	case box.Info:
-		return "12"
+		return "111" // Tokyo Night: bright sky blue (#7aa2f7)
 	case box.Warning:
-		return "11"
+		return "179" // Tokyo Night: warm golden orange (#e0af68)
 	default:
 		return "7"
 	}

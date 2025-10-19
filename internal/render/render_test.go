@@ -134,10 +134,10 @@ func TestLipGlossRenderer_GetColorForType(t *testing.T) {
 		boxType      box.BoxType
 		expectedCode string
 	}{
-		{box.Success, "10"},
-		{box.Error, "9"},
-		{box.Info, "12"},
-		{box.Warning, "11"},
+		{box.Success, "114"},  // Tokyo Night green
+		{box.Error, "210"},    // Tokyo Night pink-red
+		{box.Info, "111"},     // Tokyo Night sky blue
+		{box.Warning, "179"},  // Tokyo Night golden orange
 	}
 
 	for _, tt := range tests {

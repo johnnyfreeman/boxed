@@ -1,6 +1,6 @@
 # boxed
 
-Beautiful bordered boxes for terminal output.
+Beautiful bordered boxes for terminal output with Tokyo Night theme colors.
 
 ## Install
 
@@ -14,7 +14,9 @@ go build -o boxed .
 boxed <type> [flags]
 ```
 
-**Types:** `success` (green), `error` (red), `info` (blue), `warning` (yellow)
+**Types:** `success` (lime green), `error` (pink-red), `info` (sky blue), `warning` (golden orange)
+
+Colors inspired by the Tokyo Night theme.
 
 **Flags:**
 - `-t, --title` - Box title (bold, colored)
