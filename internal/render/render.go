@@ -154,6 +154,10 @@ func processKVPairs(kvPairs []box.KV, keyStyle lipgloss.Style) (lines []string, 
 				maxWidth = lineWidth
 			}
 		}
+
+		if i < len(kvPairs)-1 {
+			lines = append(lines, "")
+		}
 	}
 	return lines, maxWidth
 }
