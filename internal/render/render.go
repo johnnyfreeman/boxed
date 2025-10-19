@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	minLineWidth   = 30
 	maxLineWidth   = 100
 	contentPadding = 3
 )
@@ -175,26 +176,29 @@ func buildHeaderText(title, subtitle string, titleStyle, subtitleStyle lipgloss.
 	return ""
 }
 
-// calculateBoxWidth caps footer width at maxLineWidth to prevent pathologically wide boxes
-// when footers contain long timestamps or file paths. This emerged from testing where
-// ISO 8601 timestamps with timezone info created boxes too wide for standard 80-column terminals.
+// calculateBoxWidth enforces minimum and maximum width constraints while respecting
+// user-specified widths. The minimum prevents tiny boxes with short content, while the
+// maximum (applied to footers) prevents overly wide boxes from long timestamps or paths.
 func calculateBoxWidth(contentWidth, headerWidth, footerWidth, requestedWidth int) int {
-	// Cap footer width at maxLineWidth to prevent extremely wide boxes
 	if footerWidth > maxLineWidth {
 		footerWidth = maxLineWidth
 	}
 
-	minWidth := contentWidth
-	if headerWidth > minWidth {
-		minWidth = headerWidth
+	naturalWidth := contentWidth
+	if headerWidth > naturalWidth {
+		naturalWidth = headerWidth
 	}
-	if footerWidth > minWidth {
-		minWidth = footerWidth
+	if footerWidth > naturalWidth {
+		naturalWidth = footerWidth
 	}
 
-	if requestedWidth > 0 && requestedWidth > minWidth {
+	if requestedWidth > 0 && requestedWidth > naturalWidth {
 		return requestedWidth
 	}
 
-	return minWidth
+	if naturalWidth < minLineWidth {
+		return minLineWidth
+	}
+
+	return naturalWidth
 }
