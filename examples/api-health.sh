@@ -76,17 +76,14 @@ case "$box_type" in
         ;;
 esac
 
-kv_args=()
 for url in "$@"; do
     short_url=$(echo "$url" | sed 's|https://||' | sed 's|http://||' | cut -c1-40)
     status="${statuses[$url]}"
     response_time="${response_times[$url]}"
 
-    kv_args+=(--kv "$short_url=$status ($response_time)")
-done
-
-$BOXED "$box_type" \
+    echo "$short_url=$status ($response_time)"
+done | $BOXED "$box_type" \
     --title "$title" \
     --subtitle "$subtitle" \
-    "${kv_args[@]}" \
+    --stdin-kv \
     --footer "Health check completed at $(date '+%Y-%m-%d %H:%M:%S')"

@@ -60,14 +60,11 @@ case "$box_type" in
         ;;
 esac
 
-kv_args=()
 for service in "$@"; do
     status="${service_status[$service]}"
-    kv_args+=(--kv "$service=$status")
-done
-
-$BOXED "$box_type" \
+    echo "$service=$status"
+done | $BOXED "$box_type" \
     --title "Service Status" \
     --subtitle "$subtitle" \
-    "${kv_args[@]}" \
+    --stdin-kv \
     --footer "Checked at $(date '+%Y-%m-%d %H:%M:%S')"

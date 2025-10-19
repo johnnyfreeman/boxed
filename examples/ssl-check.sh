@@ -79,14 +79,11 @@ case "$box_type" in
         ;;
 esac
 
-kv_args=()
 for domain in "$@"; do
     days="${cert_info[$domain]}"
-    kv_args+=(--kv "$domain=$days remaining")
-done
-
-$BOXED "$box_type" \
+    echo "$domain=$days remaining"
+done | $BOXED "$box_type" \
     --title "SSL Certificate Check" \
     --subtitle "$subtitle" \
-    "${kv_args[@]}" \
+    --stdin-kv \
     --footer "Checked at $(date '+%Y-%m-%d %H:%M:%S')"
