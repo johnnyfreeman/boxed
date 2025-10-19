@@ -57,7 +57,9 @@ func ParseBox(boxType string, opts Options) (*box.Box, error) {
 
 // parseKVPairs converts an array of "key=value" strings into KV structs.
 // Each string is validated before parsing to ensure fail-fast behavior.
-// Supports comma-separated pairs (e.g., "A=1,B=2,C=3") for convenience.
+// Supports comma-separated pairs (e.g., "A=1,B=2,C=3") for convenience,
+// but only splits on commas that appear before a new key=value pattern.
+// This allows values to contain commas (e.g., "Status=1 staged, 2 modified").
 // Splits on the first '=' only, allowing '=' characters in values
 // (e.g., "url=http://example.com?a=1&b=2").
 func parseKVPairs(kvFlags []string) ([]box.KV, error) {
@@ -67,8 +69,8 @@ func parseKVPairs(kvFlags []string) ([]box.KV, error) {
 
 	kvPairs := make([]box.KV, 0, len(kvFlags))
 	for _, kvFlag := range kvFlags {
-		// Split on comma to support comma-separated pairs like "A=1,B=2,C=3"
-		parts := strings.Split(kvFlag, ",")
+		// Smart split: only split on commas followed by key=value pattern
+		parts := smartSplitKV(kvFlag)
 
 		for _, kv := range parts {
 			kv = strings.TrimSpace(kv)
@@ -90,4 +92,58 @@ func parseKVPairs(kvFlags []string) ([]box.KV, error) {
 	}
 
 	return kvPairs, nil
+}
+
+// smartSplitKV splits on commas only when followed by a key=value pattern.
+// This allows values to contain commas while still supporting comma-separated pairs.
+// Examples:
+//   - "A=1,B=2,C=3" -> ["A=1", "B=2", "C=3"]
+//   - "Status=1 staged, 2 modified" -> ["Status=1 staged, 2 modified"]
+//   - "A=1,2,3,B=4" -> ["A=1,2,3", "B=4"]
+func smartSplitKV(s string) []string {
+	var result []string
+	var current strings.Builder
+
+	i := 0
+	for i < len(s) {
+		if s[i] == ',' {
+			// Look ahead to see if this comma is followed by a key=value pattern
+			// We check if there's non-whitespace followed by an '=' sign
+			j := i + 1
+			// Skip whitespace after comma
+			for j < len(s) && (s[j] == ' ' || s[j] == '\t') {
+				j++
+			}
+
+			// Look for the next '=' to see if this starts a new KV pair
+			foundEquals := false
+			for k := j; k < len(s) && k < j+50; k++ {
+				if s[k] == '=' {
+					foundEquals = true
+					break
+				}
+				if s[k] == ',' {
+					// Hit another comma before equals, so this is just a comma in a value
+					break
+				}
+			}
+
+			if foundEquals && j < len(s) {
+				// This comma starts a new KV pair
+				result = append(result, current.String())
+				current.Reset()
+				i++ // Skip the comma
+				continue
+			}
+		}
+
+		current.WriteByte(s[i])
+		i++
+	}
+
+	if current.Len() > 0 {
+		result = append(result, current.String())
+	}
+
+	return result
 }
