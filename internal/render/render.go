@@ -42,14 +42,13 @@ func NewLipGlossRenderer() *LipGlossRenderer {
 // with KV pairs in the content area. Keys are dimmed while values remain at full brightness.
 // Auto-sizing calculates the minimum width needed to display all content without wrapping.
 func (r *LipGlossRenderer) RenderBox(b *box.Box) string {
-	borderColor := lipgloss.Color(r.getColorForType(b.Type))
+	borderColor := r.getColorForType(b.Type)
 	border := r.getBorderStyle(b.BorderStyle)
+	gradient := r.getGradientForType(b.Type)
 
-	borderStyle := lipgloss.NewStyle().Foreground(borderColor)
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(borderColor)
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(borderColor))
 	subtitleStyle := lipgloss.NewStyle().Italic(true).Faint(true)
 	keyStyle := lipgloss.NewStyle().Faint(true)
-	footerStyle := lipgloss.NewStyle().Faint(true)
 
 	contentLines, maxContentWidth := processKVPairs(b.KVPairs, keyStyle)
 	headerText := buildHeaderText(b.Title, b.Subtitle, titleStyle, subtitleStyle)
@@ -58,31 +57,73 @@ func (r *LipGlossRenderer) RenderBox(b *box.Box) string {
 	footerWidth := lipgloss.Width(b.Footer)
 	contentWidth := calculateBoxWidth(maxContentWidth, headerWidth, footerWidth, b.Width)
 
-	topBorder := r.buildTopBorder(border, borderStyle, headerText, contentWidth)
-	bottomBorder := r.buildBottomBorder(border, borderStyle, footerStyle.Render(b.Footer), contentWidth)
+	totalLines := 1
+	if headerText != "" {
+		totalLines++
+	}
+	if len(contentLines) == 0 {
+		totalLines++
+	} else {
+		totalLines += 2 + len(contentLines)
+	}
+	if b.Footer != "" {
+		totalLines++
+	}
+	totalLines++
 
 	var lines []string
-	lines = append(lines, topBorder)
+	lineIndex := 0
 
-	emptyLine := borderStyle.Render(border.Left) + strings.Repeat(" ", contentWidth+contentPadding*2) + borderStyle.Render(border.Right)
+	borderColor = getGradientColorAt(gradient, float64(lineIndex)/float64(totalLines-1))
+	lines = append(lines, buildBorderLine(border, contentWidth, borderColor, border.TopLeft, border.Top, border.TopRight))
+	lineIndex++
+
+	if headerText != "" {
+		headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(borderColor))
+		percentage := float64(lineIndex) / float64(totalLines-1)
+		sideColor := getGradientColorAt(gradient, percentage)
+		lines = append(lines, buildHeaderLine(border, headerText, contentWidth, gradient, sideColor, headerStyle))
+		lineIndex++
+	}
+
+	percentage := float64(lineIndex) / float64(totalLines-1)
+	sideColor := getGradientColorAt(gradient, percentage)
+	emptyLine := buildSideBorders(border, contentWidth, sideColor, sideColor, strings.Repeat(" ", contentWidth+contentPadding*2))
 
 	if len(contentLines) == 0 {
 		lines = append(lines, emptyLine)
+		lineIndex++
 	} else {
 		lines = append(lines, emptyLine)
+		lineIndex++
 
 		for _, line := range contentLines {
 			padding := contentWidth - lipgloss.Width(line)
 			leftPad := strings.Repeat(" ", contentPadding)
 			rightPad := strings.Repeat(" ", contentPadding)
 			paddedLine := leftPad + line + strings.Repeat(" ", padding) + rightPad
-			lines = append(lines, borderStyle.Render(border.Left)+paddedLine+borderStyle.Render(border.Right))
+			percentage := float64(lineIndex) / float64(totalLines-1)
+			sideColor := getGradientColorAt(gradient, percentage)
+			lines = append(lines, buildSideBorders(border, contentWidth, sideColor, sideColor, paddedLine))
+			lineIndex++
 		}
 
+		percentage = float64(lineIndex) / float64(totalLines-1)
+		sideColor = getGradientColorAt(gradient, percentage)
+		emptyLine = buildSideBorders(border, contentWidth, sideColor, sideColor, strings.Repeat(" ", contentWidth+contentPadding*2))
 		lines = append(lines, emptyLine)
+		lineIndex++
 	}
 
-	lines = append(lines, bottomBorder)
+	if b.Footer != "" {
+		percentage := float64(lineIndex) / float64(totalLines-1)
+		sideColor := getGradientColorAt(gradient, percentage)
+		lines = append(lines, buildFooterLine(border, b.Footer, contentWidth, sideColor))
+		lineIndex++
+	}
+
+	borderColor = getGradientColorAt(gradient, float64(lineIndex)/float64(totalLines-1))
+	lines = append(lines, buildBorderLine(border, contentWidth, borderColor, border.BottomLeft, border.Bottom, border.BottomRight))
 
 	return strings.Join(lines, "\n")
 }
@@ -158,43 +199,96 @@ func calculateBoxWidth(contentWidth, headerWidth, footerWidth, requestedWidth in
 	return minWidth
 }
 
-// buildBorder creates a border line with optional centered text.
-// The leftCorner, line, and rightCorner parameters specify which border characters to use,
-// allowing this function to handle both top borders (TopLeft, Top, TopRight) and
-// bottom borders (BottomLeft, Bottom, BottomRight).
-func buildBorder(style lipgloss.Style, text string, width int, leftCorner, line, rightCorner string) string {
-	textWidth := lipgloss.Width(text)
-
-	if textWidth == 0 {
-		return style.Render(leftCorner + strings.Repeat(line, width+contentPadding*2) + rightCorner)
+func getGradientColorAt(gradient []string, percentage float64) string {
+	if percentage < 0 {
+		percentage = 0
+	}
+	if percentage > 1 {
+		percentage = 1
 	}
 
-	totalBorderWidth := width + contentPadding*2
-	maxTextWidth := totalBorderWidth - 2 // Space for single space padding around text
+	colorIndex := int(percentage * float64(len(gradient)-1))
+	if colorIndex >= len(gradient) {
+		colorIndex = len(gradient) - 1
+	}
+	return gradient[colorIndex]
+}
 
-	// Truncate text if it's too long to fit in the border
-	if textWidth > maxTextWidth {
-		text = truncateText(text, maxTextWidth)
-		textWidth = lipgloss.Width(text)
+func buildBorderLine(border lipgloss.Border, width int, color string, leftCorner, line, rightCorner string) string {
+	style := lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+	totalWidth := width + contentPadding*2
+	return style.Render(leftCorner + strings.Repeat(line, totalWidth) + rightCorner)
+}
+
+func buildSideBorders(border lipgloss.Border, width int, leftColor, rightColor string, content string) string {
+	leftStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(leftColor))
+	rightStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(rightColor))
+	return leftStyle.Render(border.Left) + content + rightStyle.Render(border.Right)
+}
+
+func buildHeaderLine(border lipgloss.Border, text string, width int, gradient []string, sideColor string, textStyle lipgloss.Style) string {
+	if text == "" {
+		return ""
 	}
 
-	remainingWidth := totalBorderWidth - textWidth - 2
-	leftWidth := remainingWidth / 2
-	rightWidth := remainingWidth - leftWidth
+	prefix := "╱╱ "
+	suffix := " "
 
-	return style.Render(leftCorner) +
-		style.Render(strings.Repeat(line, leftWidth)) +
-		" " + text + " " +
-		style.Render(strings.Repeat(line, rightWidth)) +
-		style.Render(rightCorner)
+	startColor := getGradientColorAt(gradient, 0)
+	firstColorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(startColor))
+	styledPrefix := firstColorStyle.Render(prefix)
+	textWithPadding := styledPrefix + textStyle.Render(text) + suffix
+
+	textWidth := lipgloss.Width(textWithPadding)
+	totalWidth := width + contentPadding*2
+
+	if textWidth >= totalWidth {
+		truncated := truncateText(text, totalWidth-lipgloss.Width(prefix+suffix))
+		textWithPadding = styledPrefix + textStyle.Render(truncated) + suffix
+		textWidth = lipgloss.Width(textWithPadding)
+	}
+
+	slashCount := totalWidth - textWidth
+
+	var gradientSlashes strings.Builder
+	for i := 0; i < slashCount; i++ {
+		percentage := float64(i) / float64(slashCount)
+		color := getGradientColorAt(gradient, percentage)
+		colorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(color))
+		gradientSlashes.WriteString(colorStyle.Render("╱"))
+	}
+
+	content := textWithPadding + gradientSlashes.String()
+
+	return buildSideBorders(border, width, sideColor, sideColor, content)
 }
 
-func (r *LipGlossRenderer) buildTopBorder(border lipgloss.Border, style lipgloss.Style, text string, width int) string {
-	return buildBorder(style, text, width, border.TopLeft, border.Top, border.TopRight)
-}
+func buildFooterLine(border lipgloss.Border, text string, width int, sideColor string) string {
+	if text == "" {
+		return ""
+	}
 
-func (r *LipGlossRenderer) buildBottomBorder(border lipgloss.Border, style lipgloss.Style, text string, width int) string {
-	return buildBorder(style, text, width, border.BottomLeft, border.Bottom, border.BottomRight)
+	grayStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+
+	prefix := "╱╱ "
+	suffix := " "
+	textWithPadding := prefix + text + suffix
+
+	textWidth := lipgloss.Width(textWithPadding)
+	totalWidth := width + contentPadding*2
+
+	if textWidth >= totalWidth {
+		truncated := truncateText(text, totalWidth-lipgloss.Width(prefix+suffix))
+		textWithPadding = prefix + truncated + suffix
+		textWidth = lipgloss.Width(textWithPadding)
+	}
+
+	slashCount := totalWidth - textWidth
+	slashes := strings.Repeat("╱", slashCount)
+
+	content := grayStyle.Render(textWithPadding + slashes)
+
+	return buildSideBorders(border, width, sideColor, sideColor, content)
 }
 
 // getColorForType maps box types to ANSI color codes appropriate for
@@ -213,6 +307,21 @@ func (r *LipGlossRenderer) getColorForType(t box.BoxType) string {
 		return "179" // Tokyo Night: warm golden orange (#e0af68)
 	default:
 		return "7"
+	}
+}
+
+func (r *LipGlossRenderer) getGradientForType(t box.BoxType) []string {
+	switch t {
+	case box.Success:
+		return []string{"114", "120", "156", "157", "158", "122", "86", "50"}
+	case box.Error:
+		return []string{"210", "211", "217", "218", "219", "225", "224", "223"}
+	case box.Info:
+		return []string{"111", "117", "153", "189", "225", "219", "213", "177"}
+	case box.Warning:
+		return []string{"179", "215", "221", "227", "228", "229", "223", "217"}
+	default:
+		return []string{"238", "240", "242", "244", "246", "248", "250"}
 	}
 }
 
