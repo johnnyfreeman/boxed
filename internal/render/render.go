@@ -15,7 +15,7 @@ const (
 
 	// contentPadding is the number of spaces on each side of content lines (left and right).
 	// Total horizontal space added to content width = contentPadding * 2.
-	contentPadding = 2
+	contentPadding = 3
 )
 
 // Renderer abstracts the box rendering logic, enabling dependency injection
