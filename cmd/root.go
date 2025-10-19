@@ -37,8 +37,44 @@ func NewExecutor(renderer render.Renderer, writer io.Writer) *Executor {
 // This method coordinates the entire pipeline but remains simple because each
 // step is handled by dedicated, well-tested modules. The method itself contains
 // no business logic, just composition of validated components.
-func (e *Executor) Execute(boxType string, opts parser.Options, useStdin bool) error {
-	if useStdin {
+func (e *Executor) Execute(boxType string, opts parser.Options, useStdin bool, useJSON bool, jsonFile string) error {
+	// JSON input takes precedence over other options
+	if useJSON || jsonFile != "" {
+		var reader *boxio.JSONReader
+		if jsonFile != "" {
+			file, err := os.Open(jsonFile)
+			if err != nil {
+				return fmt.Errorf("failed to open JSON file: %w", err)
+			}
+			defer file.Close()
+			reader = boxio.NewJSONReader(file)
+		} else {
+			reader = boxio.NewJSONReader(os.Stdin)
+		}
+
+		jsonOpts, err := reader.ReadBox()
+		if err != nil {
+			return fmt.Errorf("failed to read JSON: %w", err)
+		}
+
+		// Merge JSON options with CLI options (CLI takes precedence for overrides)
+		if opts.Title == "" {
+			opts.Title = jsonOpts.Title
+		}
+		if opts.Subtitle == "" {
+			opts.Subtitle = jsonOpts.Subtitle
+		}
+		if opts.Footer == "" {
+			opts.Footer = jsonOpts.Footer
+		}
+		if opts.Width == 0 {
+			opts.Width = jsonOpts.Width
+		}
+		if opts.BorderStyle == "" {
+			opts.BorderStyle = jsonOpts.BorderStyle
+		}
+		opts.KVFlags = append(opts.KVFlags, jsonOpts.KVFlags...)
+	} else if useStdin {
 		reader := boxio.NewStdinKVReader(os.Stdin)
 		stdinKVs, err := reader.ReadKVPairs()
 		if err != nil {
@@ -80,7 +116,8 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 		var title, subtitle, footer, borderStyle string
 		var kvFlags []string
 		var width int
-		var useStdin bool
+		var useStdin, useJSON bool
+		var jsonFile string
 
 		cmd := &cobra.Command{
 			Use:   string(boxType),
@@ -89,8 +126,10 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 			Example: fmt.Sprintf(`  boxed %s --title "Deploy Complete"
   boxed %s --title "Build v2.1.0" --kv "Duration=2m 34s" --kv "Commit=abc1234"
   boxed %s --title "Status" --subtitle "Production" --footer "Updated 2025-10-19"
-  echo -e "env=prod\nregion=us-east-1" | boxed %s --title "Config" --stdin-kv`,
-				boxType, boxType, boxType, boxType),
+  echo -e "env=prod\nregion=us-east-1" | boxed %s --title "Config" --stdin-kv
+  echo '{"title":"Status","kv":{"CPU":"45%%"}}' | boxed %s --json
+  boxed %s --json-file status.json`,
+				boxType, boxType, boxType, boxType, boxType, boxType),
 			RunE: func(cmd *cobra.Command, args []string) error {
 				opts := parser.Options{
 					Title:       title,
@@ -101,7 +140,7 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 					BorderStyle: borderStyle,
 				}
 
-				return executor.Execute(string(boxType), opts, useStdin)
+				return executor.Execute(string(boxType), opts, useStdin, useJSON, jsonFile)
 			},
 		}
 
@@ -112,6 +151,9 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 		cmd.Flags().IntVarP(&width, "width", "w", 0, "Box width (0 for auto-size)")
 		cmd.Flags().StringVarP(&borderStyle, "border-style", "b", "rounded", "Border style (normal, rounded, thick, double)")
 		cmd.Flags().BoolVar(&useStdin, "stdin-kv", false, "Read additional KV pairs from stdin (one per line)")
+		cmd.Flags().BoolVar(&useJSON, "json", false, "Read box definition from JSON stdin")
+		cmd.Flags().StringVar(&jsonFile, "json-file", "", "Read box definition from JSON file")
+		cmd.MarkFlagsMutuallyExclusive("stdin-kv", "json", "json-file")
 
 		return cmd
 	}
