@@ -39,15 +39,15 @@ box_type=$(determine_status)
 case "$box_type" in
     error)
         title="Test Results"
-        subtitle="Tests Failed"
+        subtitle="$failed failed"
         ;;
     warning)
         title="Test Results"
-        subtitle="Many Tests Skipped"
+        subtitle="$skipped skipped"
         ;;
     *)
         title="Test Results"
-        subtitle="All Tests Passed"
+        subtitle="$passed passed"
         ;;
 esac
 

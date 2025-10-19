@@ -69,13 +69,13 @@ box_type=$(determine_status)
 
 case "$box_type" in
     error)
-        subtitle="$expired Expired Certificates"
+        subtitle="$expired expired"
         ;;
     warning)
-        subtitle="$expiring_soon Expiring Soon"
+        subtitle="$expiring_soon expiring <30d"
         ;;
     *)
-        subtitle="All Certificates Valid"
+        subtitle="$total_domains valid"
         ;;
 esac
 

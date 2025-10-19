@@ -68,11 +68,11 @@ box_type=$(determine_status)
 case "$box_type" in
     error)
         title="API Health Check"
-        subtitle="$unhealthy/$total_endpoints Endpoints Down"
+        subtitle="$unhealthy/$total_endpoints down"
         ;;
     *)
         title="API Health Check"
-        subtitle="All Endpoints Healthy"
+        subtitle="$healthy/$total_endpoints healthy"
         ;;
 esac
 

@@ -53,10 +53,10 @@ box_type=$(determine_status)
 
 case "$box_type" in
     error)
-        subtitle="$stopped/$total_services Services Stopped"
+        subtitle="$stopped/$total_services stopped"
         ;;
     *)
-        subtitle="All Services Running"
+        subtitle="$running/$total_services running"
         ;;
 esac
 

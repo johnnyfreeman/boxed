@@ -53,15 +53,15 @@ main() {
     case "$box_type" in
         error)
             title="System Monitor"
-            subtitle="Critical Usage Detected"
+            subtitle="CPU $cpu / Mem $memory"
             ;;
         warning)
             title="System Monitor"
-            subtitle="High Usage Warning"
+            subtitle="CPU $cpu / Mem $memory"
             ;;
         *)
             title="System Monitor"
-            subtitle="All Systems Normal"
+            subtitle="$uptime"
             ;;
     esac
 

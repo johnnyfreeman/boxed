@@ -47,13 +47,13 @@ box_type=$(determine_status)
 
 case "$box_type" in
     error)
-        subtitle="Critical Issues Found"
+        subtitle="$critical critical"
         ;;
     warning)
-        subtitle="Multiple Errors Detected"
+        subtitle="$errors errors"
         ;;
     *)
-        subtitle="Log Summary"
+        subtitle="$total_lines lines"
         ;;
 esac
 

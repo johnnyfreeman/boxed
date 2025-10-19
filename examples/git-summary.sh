@@ -76,13 +76,13 @@ main() {
 
     case "$box_type" in
         success)
-            subtitle="Clean Working Tree"
+            subtitle="$branch @ $commit"
             ;;
         warning)
-            subtitle="No Upstream Branch"
+            subtitle="$branch (no upstream)"
             ;;
         *)
-            subtitle="Changes Detected"
+            subtitle="$ahead_behind"
             ;;
     esac
 

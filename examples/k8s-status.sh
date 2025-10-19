@@ -54,11 +54,11 @@ main() {
     if [ "$failing_pods" -gt 0 ]; then
         box_type="warning"
         title="Cluster Status"
-        subtitle="Issues Detected"
+        subtitle="$failing_pods failing"
     else
         box_type="success"
         title="Cluster Status"
-        subtitle="All Systems Operational"
+        subtitle="$node_status"
     fi
 
     $BOXED "$box_type" \

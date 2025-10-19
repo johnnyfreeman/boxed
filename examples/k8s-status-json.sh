@@ -40,10 +40,10 @@ main() {
     local namespace_count=$(kubectl get namespaces --no-headers 2>/dev/null | wc -l)
 
     local box_type="success"
-    local subtitle="All Systems Operational"
+    local subtitle="$ready_nodes/$total_nodes ready"
     if [ "${failing_count:-0}" -gt 0 ]; then
         box_type="warning"
-        subtitle="Issues Detected"
+        subtitle="$failing_count failing"
     fi
 
     # Generate JSON and pipe to boxed

@@ -79,13 +79,13 @@ box_type=$(determine_status "$conn_usage")
 
 case "$box_type" in
     error)
-        subtitle="Critical Connection Pool Usage"
+        subtitle="$conn_usage% pool usage"
         ;;
     warning)
-        subtitle="High Connection Pool Usage"
+        subtitle="$conn_usage% pool usage"
         ;;
     *)
-        subtitle="Healthy"
+        subtitle="$conn_count/$max_conn"
         ;;
 esac
 

@@ -61,12 +61,14 @@ main() {
 
     box_type=$(determine_status "$containers")
 
+    stopped=$(echo "$containers" | grep -oP '\(\K[0-9]+' || echo "0")
+
     case "$box_type" in
         warning)
-            subtitle="Many Stopped Containers"
+            subtitle="$stopped stopped"
             ;;
         *)
-            subtitle="System Overview"
+            subtitle="$containers"
             ;;
     esac
 
