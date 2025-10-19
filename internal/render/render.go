@@ -115,20 +115,37 @@ func (r *LipGlossRenderer) RenderBox(b *box.Box) string {
 }
 
 func processKVPairs(kvPairs []box.KV, keyStyle lipgloss.Style) (lines []string, maxWidth int) {
-	for _, kv := range kvPairs {
-		key := keyStyle.Render(kv.Key)
-		keyPrefix := key + ": "
-		keyPrefixWidth := lipgloss.Width(keyPrefix)
+	if len(kvPairs) == 0 {
+		return lines, maxWidth
+	}
 
-		wrappedValue := wrapText(kv.Value, maxLineWidth-keyPrefixWidth)
+	var maxKeyWidth int
+	styledKeys := make([]string, len(kvPairs))
+	for i, kv := range kvPairs {
+		styledKeys[i] = keyStyle.Render(kv.Key)
+		keyWidth := lipgloss.Width(styledKeys[i])
+		if keyWidth > maxKeyWidth {
+			maxKeyWidth = keyWidth
+		}
+	}
+
+	columnSeparator := contentPadding
+	for i, kv := range kvPairs {
+		key := styledKeys[i]
+		keyWidth := lipgloss.Width(key)
+		padding := strings.Repeat(" ", maxKeyWidth-keyWidth)
+		separator := strings.Repeat(" ", columnSeparator)
+
+		valueIndent := maxKeyWidth + columnSeparator
+		wrappedValue := wrapText(kv.Value, maxLineWidth-valueIndent)
 		valueLines := strings.Split(wrappedValue, "\n")
 
-		for i, valueLine := range valueLines {
+		for j, valueLine := range valueLines {
 			var line string
-			if i == 0 {
-				line = keyPrefix + valueLine
+			if j == 0 {
+				line = key + padding + separator + valueLine
 			} else {
-				indent := strings.Repeat(" ", keyPrefixWidth)
+				indent := strings.Repeat(" ", valueIndent)
 				line = indent + valueLine
 			}
 			lines = append(lines, line)

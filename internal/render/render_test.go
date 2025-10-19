@@ -68,9 +68,9 @@ func TestLipGlossRenderer_RenderBox(t *testing.T) {
 				"Build Failed",
 				"v1.2.3",
 				"exit",
-				": 1",
+				"1",
 				"duration",
-				": 5m",
+				"5m",
 				"Check logs",
 			},
 		},
@@ -87,9 +87,9 @@ func TestLipGlossRenderer_RenderBox(t *testing.T) {
 			contains: []string{
 				"Status",
 				"env",
-				": prod",
+				"prod",
 				"region",
-				": us-east-1",
+				"us-east-1",
 			},
 		},
 		{
