@@ -57,7 +57,8 @@ func ParseBox(boxType string, opts Options) (*box.Box, error) {
 
 // parseKVPairs converts an array of "key=value" strings into KV structs.
 // Each string is validated before parsing to ensure fail-fast behavior.
-// The function splits on the first '=' only, allowing '=' characters in values
+// Supports comma-separated pairs (e.g., "A=1,B=2,C=3") for convenience.
+// Splits on the first '=' only, allowing '=' characters in values
 // (e.g., "url=http://example.com?a=1&b=2").
 func parseKVPairs(kvFlags []string) ([]box.KV, error) {
 	if len(kvFlags) == 0 {
@@ -65,16 +66,27 @@ func parseKVPairs(kvFlags []string) ([]box.KV, error) {
 	}
 
 	kvPairs := make([]box.KV, 0, len(kvFlags))
-	for _, kv := range kvFlags {
-		if err := validate.KVPair(kv); err != nil {
-			return nil, err
-		}
+	for _, kvFlag := range kvFlags {
+		// Split on comma to support comma-separated pairs like "A=1,B=2,C=3"
+		parts := strings.Split(kvFlag, ",")
 
-		parts := strings.SplitN(kv, "=", 2)
-		kvPairs = append(kvPairs, box.KV{
-			Key:   parts[0],
-			Value: parts[1],
-		})
+		for _, kv := range parts {
+			kv = strings.TrimSpace(kv)
+
+			if kv == "" {
+				continue
+			}
+
+			if err := validate.KVPair(kv); err != nil {
+				return nil, err
+			}
+
+			pair := strings.SplitN(kv, "=", 2)
+			kvPairs = append(kvPairs, box.KV{
+				Key:   pair[0],
+				Value: pair[1],
+			})
+		}
 	}
 
 	return kvPairs, nil

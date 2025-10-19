@@ -158,7 +158,7 @@ CI/CD pipelines, and any command-line tool that needs clear visual status output
 
 		cmd.Flags().StringVarP(&title, "title", "t", "", "Box title (bold, centered)")
 		cmd.Flags().StringVarP(&subtitle, "subtitle", "s", "", "Box subtitle (italic, centered)")
-		cmd.Flags().StringArrayVarP(&kvFlags, "kv", "k", nil, "Key-value pairs (repeatable, format: key=value)")
+		cmd.Flags().StringArrayVarP(&kvFlags, "kv", "k", nil, "Key-value pairs (repeatable, format: key=value or key1=value1,key2=value2)")
 		cmd.Flags().StringVarP(&footer, "footer", "f", "", "Box footer (faint, centered)")
 		cmd.Flags().IntVarP(&width, "width", "w", 0, "Box width (0 for auto-size)")
 		cmd.Flags().StringVarP(&borderStyle, "border-style", "b", "rounded", "Border style (normal, rounded, thick, double)")
